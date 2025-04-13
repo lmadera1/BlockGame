@@ -7,6 +7,8 @@
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3native.h>
 
+#include <glm/glm.hpp>
+
 #include <iostream>
 #include <stdexcept>
 #include <cstdlib>
@@ -17,6 +19,7 @@
 #include <limits> // Necessary for numeric_limits
 #include <algorithm> // Necessary for clamp
 #include <fstream>
+#include <array>
 
 using namespace std;
 
@@ -62,7 +65,6 @@ public:
 private:
     //Class Members
     uint32_t currentFrame = 0;
-
     GLFWwindow* window;
     VkInstance instance;
     VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
@@ -85,6 +87,11 @@ private:
     vector<VkSemaphore> renderFinishedSemaphores;
     vector<VkFence> inFlightFences;
     bool framebufferResized = false;
+    VkBuffer vertexBuffer;
+    VkDeviceMemory vertexBufferMemory;
+    VkBuffer indexBuffer;
+    VkDeviceMemory indexBufferMemory;
+
 
     
     //Class Structs
@@ -92,6 +99,46 @@ private:
         VK_KHR_SWAPCHAIN_EXTENSION_NAME
     };
 
+    struct Vertex {
+        glm::vec2 pos;
+        glm::vec3 color;
+
+        static VkVertexInputBindingDescription getBindingDescription() {
+            VkVertexInputBindingDescription bindingDescription{};
+            bindingDescription.binding = 0;
+            bindingDescription.stride = sizeof(Vertex);
+            bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+            return bindingDescription;
+        }
+
+        static array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions() {
+            array<VkVertexInputAttributeDescription, 2> attributeDescriptions{};
+
+            attributeDescriptions[0].binding = 0;
+            attributeDescriptions[0].location = 0;
+            attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
+            attributeDescriptions[0].offset = offsetof(Vertex, pos);
+
+            attributeDescriptions[1].binding = 0;
+            attributeDescriptions[1].location = 1;
+            attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+            attributeDescriptions[1].offset = offsetof(Vertex, color);
+
+            return attributeDescriptions;
+        }
+    };
+
+    const vector<Vertex> vertices = {
+    {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+    {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
+    {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
+    {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}
+    };
+
+    const vector<uint16_t> indices = {
+    0, 1, 2, 2, 3, 0
+    };
 
     //Functions
     void initVulkan() {
@@ -105,9 +152,10 @@ private:
         createGraphicsPipeline();
         createFramebuffers();
         createCommandPool();
+        createVertexBuffer();
+        createIndexBuffer();
         createCommandBuffers();
         createSyncObjects();
-
     }
 
     void mainLoop() {
@@ -121,6 +169,12 @@ private:
 
     void cleanup() {
         cleanupSwapChain();
+
+        vkDestroyBuffer(device, indexBuffer, nullptr);
+        vkFreeMemory(device, indexBufferMemory, nullptr);
+
+        vkDestroyBuffer(device, vertexBuffer, nullptr);
+        vkFreeMemory(device, vertexBufferMemory, nullptr);
 
         vkDestroyPipeline(device, graphicsPipeline, nullptr);
         vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
@@ -216,5 +270,14 @@ private:
         auto app = reinterpret_cast<BlockGame*>(glfwGetWindowUserPointer(window));
         app->framebufferResized = true;
     }
+
+    void createVertexBuffer();
+
+    uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+
+    void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
+    void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+
+    void createIndexBuffer();
 };
 
