@@ -1,7 +1,4 @@
-#include <iostream>
-#include <stdexcept>
-#include <cstdlib>
-
+#define STB_IMAGE_IMPLEMENTATION
 #include "BlockGame.h"
 
 
