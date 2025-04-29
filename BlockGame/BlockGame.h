@@ -238,7 +238,7 @@ private:
 
             unordered_set<int> keys;
 
-            // Input handling
+            //Keyboard Input handling
             if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
                 keys.insert(GLFW_KEY_W);
             
@@ -255,6 +255,7 @@ private:
                 keys.insert(GLFW_KEY_D);
 
             camera.processKeyboardInput(keys, deltaTime);
+            
 
             drawFrame();
         }
@@ -317,6 +318,9 @@ private:
         window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
         glfwSetWindowUserPointer(window, this);
         glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
+
+        glfwSetCursorPosCallback(window, mouse_callback);
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     }
 
@@ -415,7 +419,6 @@ private:
 
     void createTextureImageView() {
         textureImageView = createImageView(textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels);
-
     }
 
     VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels);
@@ -445,6 +448,18 @@ private:
     VkSampleCountFlagBits getMaxUsableSampleCount();
 
     void createColorResources();
+
+    static void mouse_callback(GLFWwindow* window, double xpos, double ypos)
+    {
+        BlockGame* app = static_cast<BlockGame*>(glfwGetWindowUserPointer(window));
+        
+        if (app)
+        {
+            app->camera.processMouseMovement(static_cast<float>(xpos), static_cast<float>(ypos));
+        }
+    }
+
+
 };
 
 

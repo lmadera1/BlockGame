@@ -21,6 +21,9 @@ public:
     float pitch = 0.0f; // Vertical rotation
     float movementSpeed = 2.5f;
     float mouseSensitivity = 0.1f;
+    bool firstMouse = true;
+    float lastX = 400.0f; // Initial window center
+    float lastY = 300.0f;
 
     glm::mat4 getViewMatrix() const {
         glm::vec3 front = calculateFrontVector();
@@ -43,6 +46,37 @@ public:
             position += movementSpeed * deltaTime * calculateRightVector();
         }
 
+    }
+
+    void processMouseMovement(float xpos, float ypos) {
+
+        // Only perform the calculation for mouse movement after the first input
+        if (firstMouse)
+        {
+            lastX = xpos;
+            lastY = ypos;
+            firstMouse = false;
+        }
+
+        // Calculate offsets for mouse movement
+        float xoffset = xpos - lastX;
+        float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
+        lastX = xpos;
+        lastY = ypos;
+
+        // Apply sensitivity to the offsets
+        xoffset *= mouseSensitivity;
+        yoffset *= mouseSensitivity;
+
+        // Update yaw and pitch
+        yaw += xoffset;
+        pitch += yoffset;
+
+        // Constrain pitch to avoid the camera flipping upside down
+        if (pitch > 89.0f)
+            pitch = 89.0f;
+        if (pitch < -89.0f)
+            pitch = -89.0f;
     }
 
 private:
