@@ -34,6 +34,8 @@
 #include <chrono>
 #include <unordered_map>
 
+#include "Camera.h"
+
 using namespace std;
 
 const uint32_t WIDTH = 1920;
@@ -107,12 +109,11 @@ namespace std {
 }
 
 
-
-
 class BlockGame {
 public:
     void run() {
         initWindow();
+        camera = Camera();
         initVulkan();
         mainLoop();
         cleanup();
@@ -182,6 +183,7 @@ private:
     VkImage colorImage;
     VkDeviceMemory colorImageMemory;
     VkImageView colorImageView;
+    Camera camera;
 
     //Class Structs
     const vector<const char*> deviceExtensions = {
@@ -224,8 +226,36 @@ private:
     }
 
     void mainLoop() {
+        float deltaTime = 0.0f, lastFrame = 0.0f;
+
         while (!glfwWindowShouldClose(window)) {
+            
             glfwPollEvents();
+
+            float currentFrame = glfwGetTime();
+            deltaTime = currentFrame - lastFrame;
+            lastFrame = currentFrame;
+
+            unordered_set<int> keys;
+
+            // Input handling
+            if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+                keys.insert(GLFW_KEY_W);
+            
+
+            if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+                keys.insert(GLFW_KEY_S);
+           
+
+            if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+                keys.insert(GLFW_KEY_A);
+            
+
+            if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+                keys.insert(GLFW_KEY_D);
+
+            camera.processKeyboardInput(keys, deltaTime);
+
             drawFrame();
         }
 
